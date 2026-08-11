@@ -4,23 +4,30 @@ from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+# Load the .env file (only for local testing)
 load_dotenv()
 
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Set up logging so we can see errors
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
+# Read all the variables from the .env file
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_LINK = os.getenv("CHANNEL_LINK")
 REGISTER_LINK = os.getenv("REGISTER_LINK")
 SUPPORT_USERNAME = os.getenv("SUPPORT_USERNAME")
-# Add a new env variable for the image URL (optional but recommended)
-IMAGE_URL = os.getenv("IMAGE_URL", "https://i.imgur.com/your-image.jpg")   # <-- change to your actual URL
+IMAGE_URL = os.getenv("IMAGE_URL")
 
-if not all([BOT_TOKEN, CHANNEL_LINK, REGISTER_LINK, SUPPORT_USERNAME]):
+# Check if any variable is missing
+if not all([BOT_TOKEN, CHANNEL_LINK, REGISTER_LINK, SUPPORT_USERNAME, IMAGE_URL]):
     raise ValueError("Missing environment variables. Check your .env file.")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a welcome photo with caption and inline buttons."""
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """This function runs when someone sends /start"""
+    
+    # Create the 3 buttons
     keyboard = [
         [InlineKeyboardButton("📢 Join Channel", url=CHANNEL_LINK)],
         [InlineKeyboardButton("🔗 Register Now", url=REGISTER_LINK)],
@@ -28,6 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
+    # The text that will appear below the image
     caption = (
         "👋 Welcome to Paisa Base!\n\n"
         "🚀 Maximize your earnings with us.\n"
@@ -37,17 +45,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Join our channel, register, or contact support using the buttons below."
     )
 
-    # Send the photo with caption and buttons
+    # Send the image + caption + buttons all together
     await update.message.reply_photo(
-        photo=IMAGE_URL,           # URL or local file path (e.g., "welcome.png")
+        photo=IMAGE_URL,
         caption=caption,
         reply_markup=reply_markup
     )
 
 def main():
-    application = Application.builder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.run_polling()
+    """Start the bot"""
+    app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    print("Bot is running... Press Ctrl+C to stop.")
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
